@@ -1,0 +1,99 @@
+augmentation:
+  cutmix_alpha: 0.0
+  erase_p: 0.25
+  mix_prob: 0.5
+  mixup_alpha: 0.0
+  randaugment_M: 9
+  randaugment_N: 2
+  train:
+    color_jitter:
+      brightness: 0.2
+      contrast: 0.2
+      hue: 0.1
+      saturation: 0.2
+    random_horizontal_flip: 0.5
+    random_resized_crop: 224
+    random_rotation: 20
+    random_vertical_flip: 0.5
+    resize: 224
+  val_test:
+    center_crop: 224
+    resize: 256
+data:
+  experiment_dir: experiment
+  seed: 42
+  source_dir: data
+  test_split: 0.1
+  train_split: 0.8
+  valid_split: 0.1
+evaluation:
+  batch_size_inference: 1
+  inference_runs: 100
+  inference_warmup: 10
+model:
+  activation: silu
+  classes:
+  - fusarium_head_blight
+  - healthy
+  - septoria
+  - stem_rust
+  - yellow_rust
+  dropout_set:
+  - 0.3
+  - 0.2
+  - 0.1
+  input_size: 224
+  num_classes: 5
+  stem_stride: 1
+normalization:
+  mean:
+  - 0.485
+  - 0.456
+  - 0.406
+  std:
+  - 0.229
+  - 0.224
+  - 0.225
+output:
+  checkpoints_dir: experiment/checkpoints
+  logs_dir: experiment/logs
+  runs_dir: experiment/runs
+pruning:
+  fine_tune_epochs: 10
+  importance_metric: l1_norm
+  method: structured
+  pruning_ratio: 0.2
+quantization:
+  calibration_samples: 0.1
+  export_onnx: true
+  method: static
+robustness:
+  perturbations:
+    brightness:
+      factor: 0.7
+    contrast:
+      factor: 0.7
+    gaussian_noise:
+      sigma: 0.1
+    motion_blur:
+      kernel_size: 9
+training:
+  batch_size: 32
+  early_stopping:
+    min_delta: 0.001
+    patience: 10
+  epochs: 50
+  label_smoothing: 0.0
+  learning_rate: 0.0003
+  mixed_precision: true
+  num_workers: 4
+  optimizer: adamw
+  optimizer_params:
+    weight_decay: 0.0005
+  pin_memory: true
+  scheduler: cosine_warmup
+  scheduler_params:
+    warmup_epochs: 5
+uncertainty:
+  dropout_rate: 0.1
+  monte_carlo_samples: 10

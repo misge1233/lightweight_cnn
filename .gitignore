@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# PyTorch
+*.pth
+*.pt
+*.pth.tar
+
+# ONNX
+*.onnx
+
+# Experiment outputs
+experiment/runs/
+experiment/checkpoints/
+experiment/logs/
+*.log
+
+# Data (keep structure, ignore actual images if large)
+# Uncomment if you want to ignore data
+# data/**/*.jpg
+# data/**/*.png
+# data/**/*.JPG
+# data/**/*.PNG
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Results and outputs
+*.csv
+*.json
+!requirements.txt
+!src/config.yaml
+
+# Keep dataset summaries
+!experiment/dataset_summary.json
+!experiment/dataset_summary.csv
+

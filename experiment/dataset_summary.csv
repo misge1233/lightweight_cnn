@@ -1,0 +1,7 @@
+Class,Train,Valid,Test,Total
+fusarium_head_blight,480,60,60,600
+healthy,480,60,60,600
+septoria,480,60,60,600
+stem_rust,480,60,60,600
+yellow_rust,480,60,60,600
+TOTAL,2400,300,300,3000
