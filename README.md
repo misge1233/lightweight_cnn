@@ -1,4 +1,4 @@
-# Efficient and Robust Deep Learning for Field-Level Wheat Disease Classification on Resource-Constrained Devices
+# Lightweight Deep Learning for Field-Level Wheat Disease Classification
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
@@ -10,7 +10,7 @@ This repository provides the implementation accompanying the paper: **"Efficient
 ## Features
 
 - **5-class wheat disease classification**: Fusarium head blight, healthy, septoria, stem rust, yellow rust
-- **Proposed lightweight model**: depthwise separable convolutions, MobileNetV2-style inverted residual blocks, Adaptive Channel Reduction (ACR)
+- **Proposed lightweight model**: MobileNetV2-style inverted residual bottleneck blocks with depthwise convolution and Adaptive Channel Reduction (ACR)
 - **Baseline comparisons**: ResNet-18, MobileNetV2/V3, EfficientNet-B0, ShuffleNetV2, GhostNet with identical training protocol
 - **Reproducible pipeline**: Fixed seeds, deterministic splits, 80/10/10 train/valid/test
 - **6-step ablation study**: Systematic hyperparameter and augmentation tuning (e.g. AdamW, RandAugment, SiLU)
@@ -26,7 +26,7 @@ This repository provides the implementation accompanying the paper: **"Efficient
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
+- [Project Structure](#expected-project-structure-after-running-the-pipeline)
 - [Dataset Availability](#dataset-availability)
 - [Usage](#usage)
 - [Configuration](#configuration)
@@ -96,7 +96,7 @@ For best accuracy, run the [ablation study](#step-25-systematic-performance-impr
 
 ---
 
-## Project Structure
+## Expected project structure after running the pipeline
 
 ```
 .
@@ -161,7 +161,7 @@ For best accuracy, run the [ablation study](#step-25-systematic-performance-impr
 
 ## Dataset Availability
 
-The dataset used in the paper is **not included** in this repository. It is **available upon request**, subject to approval by the **Ethiopian Institute of Agricultural Research (EIAR)**. Please contact the authors for data access and terms of use.
+The dataset used in the paper is **not included** in this repository. It is **available upon request**, subject to **EIAR approval** and applicable **institutional data-sharing policies**. Please contact the authors for data access requests and terms of use.
 
 ---
 
@@ -217,14 +217,15 @@ python src/train.py --config src/config.yaml --model proposed
 ```
 
 **Training Configuration (consistent across all models):**
-- Optimizer: Adam
-- Learning Rate: 1e-4
+- Optimizer: AdamW
+- Learning Rate: 3e-4
+- Weight Decay: 5e-4
 - Batch Size: 32
-- Scheduler: CosineAnnealingLR
+- Scheduler: 5-epoch warmup + cosine annealing
 - Loss: CrossEntropyLoss
 - Early Stopping: Patience=10, monitor validation loss
 - Mixed Precision: Enabled (when GPU available)
-- Epochs: 50 (default, configurable)
+- Epochs: Up to 50 (with early stopping)
 
 **Training Outputs** (saved to `experiment/runs/<timestamp>_<modelname>/`):
 - `best_model.pth`: Best checkpoint based on validation accuracy
@@ -369,9 +370,10 @@ python src/eval.py --config src/config.yaml --ckpt experiment/runs/20260108_2046
    - Reports accuracy, F1-score, and relative performance drop
 
 3. **Uncertainty and Calibration:**
-   - `uncertainty_results.csv`: Coverage–accuracy curves; softmax confidence; Monte Carlo Dropout (T=10)
+   - `uncertainty_results.csv`: Confidence-based selective prediction (coverage–accuracy) using softmax confidence
    - Calibration metrics: Expected Calibration Error (ECE), Brier score
    - Confidence histograms for correct vs incorrect predictions
+   - (Optional, if enabled in code) Monte Carlo Dropout (T=10) for additional uncertainty estimates
 
 4. **Error Analysis:**
    - `error_analysis.json`: Categorized error analysis
@@ -519,9 +521,9 @@ Edit `src/config.yaml` to customize:
   - Brightness/contrast reduction factors
 
 - **Uncertainty and Calibration:**
-  - Monte Carlo Dropout samples (default: 10)
-  - Dropout rate for MC sampling (default: 0.1)
+  - Confidence-based selective prediction (coverage–accuracy) using softmax confidence
   - ECE and Brier score computation
+  - (Optional) Monte Carlo Dropout samples (default: 10) and dropout rate for MC sampling (default: 0.1)
 
 - **Pruning Configuration:**
   - Pruning ratio (default: 0.2 = 20%)
@@ -544,8 +546,7 @@ Edit `src/config.yaml` to customize:
 
 The proposed architecture comprises:
 - **Lightweight stem**: Initial 3×3 convolution
-- **Depthwise separable convolutions**: Reduced computation relative to standard convolutions
-- **MobileNetV2-style inverted residual blocks**: Inverted residual blocks with narrower expansion ratios (1.2–2.0)
+- **MobileNetV2-style inverted residual bottleneck blocks with depthwise convolution**: Inverted residual bottlenecks with narrower expansion ratios (1.2–2.0)
 - **Adaptive Channel Reduction (ACR)**: Channel counts preserved in early and mid layers; stronger reduction in later layers
 - **Global average pooling and compact classifier**: Final feature aggregation with dropout
 
@@ -578,9 +579,9 @@ All baselines use ImageNet pretrained weights with transfer learning:
 
 ### Uncertainty and Calibration Metrics
 - **Softmax confidence**: Maximum softmax probability as confidence score
-- **Monte Carlo Dropout**: Predictive uncertainty via T forward passes
+- **Selective prediction (confidence-based)**: Coverage–accuracy curves using confidence thresholds
 - **Calibration**: Expected Calibration Error (ECE) and Brier score
-- **Coverage–accuracy curves**: Accuracy vs coverage at different confidence thresholds
+- **Monte Carlo Dropout (optional)**: Predictive uncertainty via T forward passes
 - **Confidence histograms**: Distribution of confidence for correct vs incorrect predictions
 
 ### Efficiency Metrics
@@ -733,18 +734,17 @@ pip install timm
 If you use this code or the method in your work, please cite:
 
 ```bibtex
-@article{wheat-lightweight,
-  title   = {Efficient and Robust Deep Learning for Field-Level Wheat Disease Classification on Resource-Constrained Devices},
-  author  = {[Abetu, Misganu Tuse and Abebe, Teklu Urgessa and Tune, Kula Kakeba]},
-  journal = {[Smart Agricultural Technology]},
-  year    = {[2026]},
-  note    = {Paper citation to be added upon publication}
+@unpublished{wheat-field-level-2026,
+  title  = {Efficient and Robust Deep Learning for Field-Level Wheat Disease Classification on Resource-Constrained Devices},
+  author = {Abetu, Misganu Tuse and Abebe, Teklu Urgessa and Tune, Kula Kakeba},
+  year   = {2026},
+  note   = {Submitted manuscript (under review)}
 }
 ```
 
 ## License
 
-License terms will be added upon publication. For now, contact the authors for reuse and redistribution.
+This repository is shared for **academic review and reproducibility**. A formal open-source license will be added once finalized; until then, please contact the authors for reuse and redistribution beyond academic use.
 
 ## Contact
 
