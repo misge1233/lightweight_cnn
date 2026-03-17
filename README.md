@@ -1,4 +1,4 @@
-# Lightweight Deep Learning for Field-Level Wheat Disease Classification
+# Efficient and Robust Deep Learning for Field-Level Wheat Disease Classification on Resource-Constrained Devices
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
