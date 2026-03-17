@@ -1,23 +1,24 @@
-# Wheat Disease Classification
+# Lightweight Deep Learning for Field-Level Wheat Disease Classification
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
 
-A complete Deep Learning pipeline for training, evaluating, and deploying **lightweight deep learning models** for wheat disease classification—designed for resource-constrained environments. Implements the approach from the paper: *"A Lightweight and Robust Deep Learning Model for Wheat Disease Classification in Resource-Constrained Environments"*.
+This repository provides the implementation accompanying the paper: **"Efficient and Robust Deep Learning for Field-Level Wheat Disease Classification on Resource-Constrained Devices"**. It contains a complete pipeline for training, evaluating, and deploying lightweight deep learning models for field-level wheat disease classification on resource-constrained devices.
 
 ---
 
 ## Features
 
 - **5-class wheat disease classification**: Fusarium head blight, healthy, septoria, stem rust, yellow rust
-- **Proposed lightweight model** with depthwise separable convolutions and SE attention
+- **Proposed lightweight model**: depthwise separable convolutions, MobileNetV2-style inverted residual blocks, Adaptive Channel Reduction (ACR)
 - **Baseline comparisons**: ResNet-18, MobileNetV2/V3, EfficientNet-B0, ShuffleNetV2, GhostNet with identical training protocol
 - **Reproducible pipeline**: Fixed seeds, deterministic splits, 80/10/10 train/valid/test
 - **6-step ablation study**: Systematic hyperparameter and augmentation tuning (e.g. AdamW, RandAugment, SiLU)
 - **Model compression**: Structured pruning and INT8 quantization with ONNX export
+- **Calibration**: Expected Calibration Error (ECE) and Brier score for uncertainty quantification
 - **Robustness & uncertainty**: Perturbation evaluation and confidence/coverage analysis
 - **Error analysis**: Categorized misclassifications and model cards for transparency
-- **Android deployment**: ONNX assets and latency benchmarking (e.g. Samsung Galaxy A52)
+- **Android deployment**: ONNX assets and on-device latency benchmarking (e.g. Samsung Galaxy A52)
 
 ---
 
@@ -26,6 +27,7 @@ A complete Deep Learning pipeline for training, evaluating, and deploying **ligh
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Project Structure](#project-structure)
+- [Dataset Availability](#dataset-availability)
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Model Architecture](#model-architecture)
@@ -98,13 +100,13 @@ For best accuracy, run the [ablation study](#step-25-systematic-performance-impr
 
 ```
 .
-├── data/                              # Source dataset (5 classes, ~600 images each)
+├── data/                              # NOT INCLUDED — source dataset (5 classes); see Dataset Availability
 │   ├── fusarium_head_blight/
 │   ├── healthy/
 │   ├── septoria/
 │   ├── stem_rust/
 │   └── yellow_rust/
-├── experiment/                        # Experiment outputs
+├── experiment/                        # Generated after running — splits, runs, ablation outputs
 │   ├── train/                         # Training split (80%)
 │   ├── valid/                         # Validation split (10%)
 │   ├── test/                          # Test split (10%)
@@ -154,6 +156,12 @@ For best accuracy, run the [ablation study](#step-25-systematic-performance-impr
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+## Dataset Availability
+
+The dataset used in the paper is **not included** in this repository. It is **available upon request**, subject to approval by the **Ethiopian Institute of Agricultural Research (EIAR)**. Please contact the authors for data access and terms of use.
 
 ---
 
@@ -360,12 +368,10 @@ python src/eval.py --config src/config.yaml --ckpt experiment/runs/20260108_2046
      - Contrast reduction (factor=0.7)
    - Reports accuracy, F1-score, and relative performance drop
 
-3. **Uncertainty-Aware Inference:**
-   - `uncertainty_results.csv`: Coverage-accuracy curves
-     - Softmax confidence scores
-     - Monte Carlo Dropout (T=10 forward passes)
+3. **Uncertainty and Calibration:**
+   - `uncertainty_results.csv`: Coverage–accuracy curves; softmax confidence; Monte Carlo Dropout (T=10)
+   - Calibration metrics: Expected Calibration Error (ECE), Brier score
    - Confidence histograms for correct vs incorrect predictions
-   - Coverage vs accuracy curves at different confidence thresholds
 
 4. **Error Analysis:**
    - `error_analysis.json`: Categorized error analysis
@@ -512,9 +518,10 @@ Edit `src/config.yaml` to customize:
   - Motion blur kernel size
   - Brightness/contrast reduction factors
 
-- **Uncertainty Evaluation:**
+- **Uncertainty and Calibration:**
   - Monte Carlo Dropout samples (default: 10)
   - Dropout rate for MC sampling (default: 0.1)
+  - ECE and Brier score computation
 
 - **Pruning Configuration:**
   - Pruning ratio (default: 0.2 = 20%)
@@ -535,12 +542,12 @@ Edit `src/config.yaml` to customize:
 
 ### Proposed Lightweight Model
 
-The proposed architecture features:
-- **Lightweight stem**: Initial 3x3 convolution
-- **Depthwise separable convolutions**: Reduce computation by ~9×
-- **Inverted residual blocks**: MobileNetV2-inspired with narrower expansion ratios (1.2-2.0)
-- **Adaptive channel reduction**: Preserve more channels in early/mid layers; aggressively compress later layers
-- **Global average pooling + compact classifier**: Final feature aggregation with dropout
+The proposed architecture comprises:
+- **Lightweight stem**: Initial 3×3 convolution
+- **Depthwise separable convolutions**: Reduced computation relative to standard convolutions
+- **MobileNetV2-style inverted residual blocks**: Inverted residual blocks with narrower expansion ratios (1.2–2.0)
+- **Adaptive Channel Reduction (ACR)**: Channel counts preserved in early and mid layers; stronger reduction in later layers
+- **Global average pooling and compact classifier**: Final feature aggregation with dropout
 
 ### Baseline Models
 
@@ -569,10 +576,11 @@ All baselines use ImageNet pretrained weights with transfer learning:
   - Contrast reduction
 - **Relative performance drop**: Percentage decrease vs clean test set
 
-### Uncertainty Metrics
+### Uncertainty and Calibration Metrics
 - **Softmax confidence**: Maximum softmax probability as confidence score
 - **Monte Carlo Dropout**: Predictive uncertainty via T forward passes
-- **Coverage-accuracy curves**: Accuracy vs coverage at different confidence thresholds
+- **Calibration**: Expected Calibration Error (ECE) and Brier score
+- **Coverage–accuracy curves**: Accuracy vs coverage at different confidence thresholds
 - **Confidence histograms**: Distribution of confidence for correct vs incorrect predictions
 
 ### Efficiency Metrics
@@ -727,7 +735,7 @@ If you use this code or the method in your work, please cite:
 ```bibtex
 @article{wheat-lightweight,
   title   = {Efficient and Robust Deep Learning for Field-Level Wheat Disease Classification on Resource-Constrained Devices},
-  author  = {[Misganu Tuse Abetu, Teklu Urgessa Abebe, Kula Kakeba Tune]},
+  author  = {[Abetu, Misganu Tuse and Abebe, Teklu Urgessa and Tune, Kula Kakeba]},
   journal = {[Smart Agricultural Technology]},
   year    = {[2026]},
   note    = {Paper citation to be added upon publication}
