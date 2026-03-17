@@ -3,7 +3,7 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
 
-A complete ML pipeline for training, evaluating, and deploying **lightweight deep learning models** for wheat disease classification—designed for resource-constrained environments. Implements the approach from the paper: *"A Lightweight and Robust Deep Learning Model for Wheat Disease Classification in Resource-Constrained Environments"*.
+A complete Deep Learning pipeline for training, evaluating, and deploying **lightweight deep learning models** for wheat disease classification—designed for resource-constrained environments. Implements the approach from the paper: *"A Lightweight and Robust Deep Learning Model for Wheat Disease Classification in Resource-Constrained Environments"*.
 
 ---
 
@@ -11,7 +11,7 @@ A complete ML pipeline for training, evaluating, and deploying **lightweight dee
 
 - **5-class wheat disease classification**: Fusarium head blight, healthy, septoria, stem rust, yellow rust
 - **Proposed lightweight model** (~1.16M params, ~4.5 MB) with depthwise separable convolutions and SE attention
-- **Baseline comparisons**: ResNet-18, MobileNetV2/V3, EfficientNet-B0 with identical training protocol
+- **Baseline comparisons**: ResNet-18, MobileNetV2/V3, EfficientNet-B0, ShuffleNetV2, GhostNet with identical training protocol
 - **Reproducible pipeline**: Fixed seeds, deterministic splits, 80/10/10 train/valid/test
 - **6-step ablation study**: Systematic hyperparameter and augmentation tuning (e.g. AdamW, RandAugment, SiLU)
 - **Model compression**: Structured pruning and INT8 quantization with ONNX export
@@ -148,7 +148,7 @@ For best accuracy, run the [ablation study](#step-25-systematic-performance-impr
 │   ├── utils.py                       # Shared utilities
 │   └── models/
 │       ├── __init__.py
-│       ├── baselines.py               # ResNet-18, MobileNetV2/V3, EfficientNet-B0
+│       ├── baselines.py               # ResNet-18, MobileNetV2/V3, EfficientNet-B0, ShuffleNetV2, GhostNet
 │       └── proposed_lightweight.py    # Proposed lightweight architecture
 ├── requirements.txt
 ├── .gitignore
@@ -194,6 +194,12 @@ python src/train.py --config src/config.yaml --model mobilenetv3_large
 
 # EfficientNet-B0
 python src/train.py --config src/config.yaml --model efficientnet_b0
+
+# ShuffleNetV2 (x1.0)
+python src/train.py --config src/config.yaml --model shufflenetv2
+
+# GhostNet
+python src/train.py --config src/config.yaml --model ghostnet
 ```
 
 #### Train Proposed Lightweight Model
@@ -306,28 +312,6 @@ After completion, the system prints:
 - Best validation accuracy/F1 and final test accuracy/F1
 - Summary CSV location for detailed analysis
 
-**Detailed Ablation Results:**
-
-| Step | Variant | Val Acc | Test Acc | Test F1 | Key Changes |
-|------|---------|---------|----------|---------|-------------|
-| Baseline | ls_0.1 | 79.33% | 76.67% | 76.88% | Original config |
-| **1** | ls_0.0 | **81.00%** | **80.67%** | **80.73%** | No label smoothing, dropout=(0.3,0.2,0.1) |
-| **2** | adamw_lr0.0003_wd0.0005 | **91.33%** | **90.33%** | **90.39%** | AdamW, lr=3e-4, wd=5e-4, warmup=5 |
-| 3 | mixup_cutmix | 88.33% | 88.67% | 88.73% | MixUp/CutMix (rejected, kept Step 2) |
-| 4 | randaug_erase | 86.00% | 81.33% | 81.33% | RandAug(N=2,M=9) + Erase(p=0.25) |
-| 5 | stem_stride1 | 89.67% | 88.33% | 88.42% | Stem stride=1 (better than input256) |
-| **6** | silu | **93.67%** | **90.67%** | **90.67%** | SiLU activation |
-
-**Key Insights:**
-- **Step 2** (optimizer upgrade) provided the largest gain (+9.67%)
-- **MixUp/CutMix** hurt performance on this dataset (rejected)
-- **RandAugment + RandomErasing** initially hurt, but were kept and recovered in later steps
-- **Stem stride=1** (preserving spatial detail) was better than higher resolution (256)
-- **SiLU activation** provided final boost over ReLU6
-- **Final improvement**: +14.00% absolute (76.67% → 90.67%)
-
-📄 **Detailed Summary**: See `experiment/ablation_runs/ABLATION_SUMMARY.md` for comprehensive analysis with performance trajectories, insights, and recommendations.
-
 **📊 Generate Visualizations:**
 
 Create publication-quality figures from ablation results:
@@ -360,13 +344,6 @@ This script:
 - Merges it with the base config
 - Trains the proposed model with optimized hyperparameters
 - Saves results to `experiment/runs/` with all evaluation outputs
-
-**Expected Performance** (based on ablation study):
-- **Validation Accuracy**: ~93.67%
-- **Test Accuracy**: ~90.67%
-- **Test F1 (macro)**: ~90.67%
-- **Parameters**: 1.16M
-- **Model Size**: 4.47 MB
 
 ### Step 3: Comprehensive Model Evaluation
 
@@ -576,18 +553,6 @@ The proposed architecture features:
 - **Adaptive channel reduction**: Preserve more channels in early/mid layers; aggressively compress later layers
 - **Global average pooling + compact classifier**: Final feature aggregation with dropout
 
-**Architecture Details:**
-- Input: 224×224×3 RGB images (configurable: 256 for training in Step 5)
-- Stem: 3×3 conv, stride=2 (configurable: stride=1 in Step 5) → 40 channels
-- Block 1: 40→80 channels (2 inverted residual blocks)
-- Block 2: 80→120 channels (3 inverted residual blocks for rust discrimination)
-- Block 3: 120→160 channels (2 inverted residual blocks)
-- Block 4: 160→224 channels (2 inverted residual blocks)
-- Final: Depthwise separable conv → 320 channels with SE attention
-- Classifier: 320→256→128→5 classes with configurable dropout
-- Activation: ReLU6 (default) or SiLU (Step 6 upgrade)
-- SE (Squeeze-and-Excitation) attention blocks throughout for channel-wise enhancement
-
 ### Baseline Models
 
 All baselines use ImageNet pretrained weights with transfer learning:
@@ -597,6 +562,8 @@ All baselines use ImageNet pretrained weights with transfer learning:
 - **MobileNetV3-Small**: NAS-optimized mobile architecture, ~2.9M parameters
 - **MobileNetV3-Large**: NAS-optimized mobile architecture, ~5.4M parameters
 - **EfficientNet-B0**: Compound scaling architecture, ~5.3M parameters
+- **ShuffleNetV2**: Channel shuffle for efficient computation (x1.0), ~2.3M parameters
+- **GhostNet**: Ghost modules for efficient feature maps (via timm), ~5.2M parameters
 
 ## Evaluation Metrics
 
@@ -740,6 +707,12 @@ If MobileNetV3 is not available in torchvision, install timm:
 pip install timm
 ```
 
+### GhostNet / ShuffleNetV2 Import Error
+GhostNet requires **timm**. ShuffleNetV2 uses torchvision when available, otherwise timm:
+```bash
+pip install timm
+```
+
 ### ONNX Export Issues
 - Ensure ONNX opset version is compatible (script uses opset 11 by default)
 - For older PyTorch versions, you may need to adjust opset version in `export_onnx.py`
@@ -764,10 +737,10 @@ If you use this code or the method in your work, please cite:
 
 ```bibtex
 @article{wheat-lightweight,
-  title   = {A Lightweight and Robust Deep Learning Model for Wheat Disease Classification in Resource-Constrained Environments},
-  author  = {[Authors]},
-  journal = {[Journal]},
-  year    = {[Year]},
+  title   = {Efficient and Robust Deep Learning for Field-Level Wheat Disease Classification on Resource-Constrained Devices},
+  author  = {[Misganu Tuse Abetu, Teklu Urgessa Abebe, Kula Kakeba Tune]},
+  journal = {[Smart Agricultural Technology]},
+  year    = {[2026]},
   note    = {Paper citation to be added upon publication}
 }
 ```
