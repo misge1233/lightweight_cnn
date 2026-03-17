@@ -10,7 +10,7 @@ A complete Deep Learning pipeline for training, evaluating, and deploying **ligh
 ## Features
 
 - **5-class wheat disease classification**: Fusarium head blight, healthy, septoria, stem rust, yellow rust
-- **Proposed lightweight model** (~1.16M params, ~4.5 MB) with depthwise separable convolutions and SE attention
+- **Proposed lightweight model** with depthwise separable convolutions and SE attention
 - **Baseline comparisons**: ResNet-18, MobileNetV2/V3, EfficientNet-B0, ShuffleNetV2, GhostNet with identical training protocol
 - **Reproducible pipeline**: Fixed seeds, deterministic splits, 80/10/10 train/valid/test
 - **6-step ablation study**: Systematic hyperparameter and augmentation tuning (e.g. AdamW, RandAugment, SiLU)
@@ -236,17 +236,6 @@ python src/run_ablation.py --config src/config.yaml --experiment_dir experiment
 # Run specific steps
 python src/run_ablation.py --start_step 1 --end_step 3  # Steps 1-3 only
 ```
-
-**🎯 Ablation Study Results (Completed):**
-
-The 6-step improvement plan achieved a **+14% absolute improvement** in test accuracy:
-- **Baseline**: 76.67% → **Final Best**: 90.67% (93.67% validation)
-- **Key Improvements**:
-  - Step 2 (AdamW + LR): +13.66% (largest gain!)
-  - Step 6 (SiLU activation): +0.34% (final boost)
-- **Best Configuration**: AdamW (lr=3e-4, wd=5e-4), no label smoothing, no MixUp/CutMix, RandAugment (N=2, M=9), RandomErasing (p=0.25), stem_stride=1, SiLU activation
-- **Efficiency Maintained**: 1.16M parameters, 4.47 MB model size
-
 **Performance Improvement Plan:**
 
 The system executes 6 sequential steps, each building on the previous best configuration:
