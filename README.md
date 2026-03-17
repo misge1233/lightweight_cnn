@@ -546,13 +546,13 @@ The proposed architecture features:
 
 All baselines use ImageNet pretrained weights with transfer learning:
 
-- **ResNet-18**: Standard residual network, ~11M parameters
-- **MobileNetV2**: Mobile-optimized architecture, ~3.4M parameters
-- **MobileNetV3-Small**: NAS-optimized mobile architecture, ~2.9M parameters
-- **MobileNetV3-Large**: NAS-optimized mobile architecture, ~5.4M parameters
-- **EfficientNet-B0**: Compound scaling architecture, ~5.3M parameters
-- **ShuffleNetV2**: Channel shuffle for efficient computation (x1.0), ~2.3M parameters
-- **GhostNet**: Ghost modules for efficient feature maps (via timm), ~5.2M parameters
+- **ResNet-18**: Standard residual network
+- **MobileNetV2**: Mobile-optimized architecture
+- **MobileNetV3-Small**: NAS-optimized mobile architecture
+- **MobileNetV3-Large**: NAS-optimized mobile architecture
+- **EfficientNet-B0**: Compound scaling architecture
+- **ShuffleNetV2**: Channel shuffle for efficient computation
+- **GhostNet**: Ghost modules for efficient feature maps (via timm)
 
 ## Evaluation Metrics
 
